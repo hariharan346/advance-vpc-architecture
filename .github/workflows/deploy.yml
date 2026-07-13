@@ -1,0 +1,64 @@
+name: Deploy to Production App Servers
+
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Set up SSH
+        run: |
+          mkdir -p ~/.ssh
+          echo "${{ secrets.BASTION_SSH_KEY }}" > ~/.ssh/bastion_key
+          echo "${{ secrets.APP_SSH_KEY }}" > ~/.ssh/app_key
+          chmod 600 ~/.ssh/bastion_key ~/.ssh/app_key
+          
+          # Configure SSH config for jump host
+          cat >> ~/.ssh/config <<EOF
+          Host bastion
+            HostName ${{ secrets.BASTION_IP }}
+            User ec2-user
+            IdentityFile ~/.ssh/bastion_key
+            StrictHostKeyChecking no
+
+          Host app1
+            HostName 10.0.11.81
+            User ec2-user
+            IdentityFile ~/.ssh/app_key
+            ProxyJump bastion
+            StrictHostKeyChecking no
+
+          Host app2
+            HostName 10.0.12.161
+            User ec2-user
+            IdentityFile ~/.ssh/app_key
+            ProxyJump bastion
+            StrictHostKeyChecking no
+          EOF
+
+      - name: Deploy to App Server 1
+        run: |
+          # Copy website files to Nginx web root on App Server 1
+          scp -r src/* app1:/tmp/
+          ssh app1 "sudo mv /tmp/* /usr/share/nginx/html/ && sudo systemctl reload nginx"
+
+      - name: Deploy to App Server 2
+        run: |
+          # Copy website files to Nginx web root on App Server 2
+          scp -r src/* app2:/tmp/
+          ssh app2 "sudo mv /tmp/* /usr/share/nginx/html/ && sudo systemctl reload nginx"
+
+      - name: Verify Health Check
+        run: |
+          # Query the load balancer or app servers directly to verify deployment success
+          echo "Deployment complete. Checking application health..."
+          ssh app1 "curl -fsI http://localhost"
+          ssh app2 "curl -fsI http://localhost"
