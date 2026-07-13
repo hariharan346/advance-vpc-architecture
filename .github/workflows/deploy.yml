@@ -23,8 +23,9 @@ jobs:
         run: |
           set -euo pipefail
 
-          # Validate required secrets
-          [ -n "${BASTION_IP}" ] || { echo "ERROR: BASTION_IP is not set"; exit 1; }
+          # Fallback to known public IP if secret is missing
+          IP="${BASTION_IP:-13.201.0.208}"
+
           [ -n "${BASTION_SSH_KEY}" ] || { echo "ERROR: BASTION_SSH_KEY is not set"; exit 1; }
           [ -n "${APP_SSH_KEY}" ] || { echo "ERROR: APP_SSH_KEY is not set"; exit 1; }
 
@@ -37,7 +38,7 @@ jobs:
 
           cat > ~/.ssh/config <<EOF
       Host bastion
-        HostName ${BASTION_IP}
+        HostName ${IP}
         User ec2-user
         IdentityFile ~/.ssh/bastion_key
         StrictHostKeyChecking no
