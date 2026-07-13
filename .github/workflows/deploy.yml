@@ -15,34 +15,51 @@ jobs:
         uses: actions/checkout@v4
 
       - name: Set up SSH
+        shell: bash
+        env:
+          BASTION_IP: ${{ secrets.BASTION_IP }}
+          BASTION_SSH_KEY: ${{ secrets.BASTION_SSH_KEY }}
+          APP_SSH_KEY: ${{ secrets.APP_SSH_KEY }}
         run: |
+          set -euo pipefail
+
+          # Validate required secrets
+          [ -n "${BASTION_IP}" ] || { echo "ERROR: BASTION_IP is not set"; exit 1; }
+          [ -n "${BASTION_SSH_KEY}" ] || { echo "ERROR: BASTION_SSH_KEY is not set"; exit 1; }
+          [ -n "${APP_SSH_KEY}" ] || { echo "ERROR: APP_SSH_KEY is not set"; exit 1; }
+
           mkdir -p ~/.ssh
-          echo "${{ secrets.BASTION_SSH_KEY }}" > ~/.ssh/bastion_key
-          echo "${{ secrets.APP_SSH_KEY }}" > ~/.ssh/app_key
+          chmod 700 ~/.ssh
+
+          printf '%s\n' "${BASTION_SSH_KEY}" > ~/.ssh/bastion_key
+          printf '%s\n' "${APP_SSH_KEY}" > ~/.ssh/app_key
           chmod 600 ~/.ssh/bastion_key ~/.ssh/app_key
-          
-          # Configure SSH config for jump host
-          cat >> ~/.ssh/config <<EOF
-          Host bastion
-            HostName ${{ secrets.BASTION_IP }}
-            User ec2-user
-            IdentityFile ~/.ssh/bastion_key
-            StrictHostKeyChecking no
 
-          Host app1
-            HostName 10.0.11.81
-            User ec2-user
-            IdentityFile ~/.ssh/app_key
-            ProxyJump bastion
-            StrictHostKeyChecking no
+          cat > ~/.ssh/config <<EOF
+      Host bastion
+        HostName ${BASTION_IP}
+        User ec2-user
+        IdentityFile ~/.ssh/bastion_key
+        StrictHostKeyChecking no
 
-          Host app2
-            HostName 10.0.12.161
-            User ec2-user
-            IdentityFile ~/.ssh/app_key
-            ProxyJump bastion
-            StrictHostKeyChecking no
-          EOF
+      Host app1
+        HostName 10.0.11.81
+        User ec2-user
+        IdentityFile ~/.ssh/app_key
+        ProxyJump bastion
+        StrictHostKeyChecking no
+
+      Host app2
+        HostName 10.0.12.161
+        User ec2-user
+        IdentityFile ~/.ssh/app_key
+        ProxyJump bastion
+        StrictHostKeyChecking no
+      EOF
+
+          # Validate SSH config syntax before deploy steps
+          ssh -F ~/.ssh/config -G app1 >/dev/null
+
 
       - name: Deploy to App Server 1
         run: |
