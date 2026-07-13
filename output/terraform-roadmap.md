@@ -1,38 +1,40 @@
-# Terraform Deployment Roadmap
+# 🗺️ Terraform Deployment Roadmap
 
-This document outlines how to execute the Terraform files located in the `terraform/` directory to automatically provision the entire Mini Enterprise AWS Infrastructure.
+How to deploy the modular AWS infrastructure codebase using Terraform.
 
-## Deployment Steps
+## 1. Setup Instructions
 
-### 1. Prerequisites
-* Install Terraform CLI (`>= 1.0.0`).
-* Configure AWS Credentials in local terminal or environment variables:
-  ```bash
-  aws configure
-  # Input your Access Key ID and Secret Access Key
-  ```
+```mermaid
+graph LR
+    A["Initialize (init)"] --> B["Validate (plan)"] --> C["Provision (apply)"]
+```
 
-### 2. Initialize Working Directory
-Navigate to the `terraform/` directory and initialize provider dependencies:
+### Step 1: Credentials Setup
+Configure AWS CLI session credentials:
+```bash
+aws configure
+```
+
+### Step 2: Initialize Terraform Workspace
+Install AWS provider plugins and download required modules:
 ```bash
 cd terraform
 terraform init
 ```
 
-### 3. Review Plan
-Generate and inspect the execution plan to verify all resources (VPCs, Subnets, Gateways, EC2s, ALBs) will be provisioned correctly:
+### Step 3: Execution Plan Check
+Generate and review execution changes before provisioning:
 ```bash
 terraform plan
 ```
 
-### 4. Apply Infrastructure Changes
-Provision the resources in your AWS account:
+### Step 4: Provision Infrastructure
+Create resources in your AWS account:
 ```bash
 terraform apply -auto-approve
 ```
 
-### 5. Verification after Terraform Run
-Once deployment finishes:
-* Note down the ALB DNS name printed or displayed in the AWS Console.
-* Curl the ALB DNS name to verify HTTP traffic goes to the app servers.
-* SSH into the `tools-server` and verify that Jenkins (8080), Grafana (3000), and Prometheus (9090) containers are running.
+## 2. Outputs Validation
+Once the resources are successfully created:
+1. Verify web app access using the generated `prod-alb` DNS name.
+2. Verify Tools Server services (Jenkins: `8080`, Grafana: `3000`, Prometheus: `9090`).

@@ -1,12 +1,10 @@
-# Network Validation Report
+# ✅ Network Validation Report
 
-This report confirms that connectivity between the Production VPC and the Development VPC has been restored.
+Bidirectional verification testing records for VPC Peering connectivity.
 
-## Bidirectional Validation Results
+## 1. Development to Production Verification
 
-### 1. From Development VPC (`dev-server`: 10.1.1.128) to Production VPC (`app-server-1`: 10.0.11.81)
-
-#### Ping Test (ICMP)
+### Ping Validation (Dev Server $\rightarrow$ App Server 1)
 ```bash
 $ ping -c 3 10.0.11.81
 PING 10.0.11.81 (10.0.11.81) 56(84) bytes of data.
@@ -16,27 +14,25 @@ PING 10.0.11.81 (10.0.11.81) 56(84) bytes of data.
 
 --- 10.0.11.81 ping statistics ---
 3 packets transmitted, 3 received, 0% packet loss, time 2098ms
-rtt min/avg/max/mdev = 0.158/0.171/0.192/0.014 ms
 ```
-**Status**: SUCCESS (0% packet loss).
+* **Status**: **PASS** (0% loss)
 
-#### HTTP Service Access (Port 80)
+### HTTP Validation (Dev Server $\rightarrow$ App Server 1)
 ```bash
 $ curl -I http://10.0.11.81
 HTTP/1.1 200 OK
 Server: nginx/1.30.3
-Date: Mon, 13 Jul 2026 08:12:40 GMT
 Content-Type: text/html
 Content-Length: 22
 Connection: keep-alive
 ```
-**Status**: SUCCESS (HTTP 200 OK).
+* **Status**: **PASS** (HTTP 200 OK)
 
 ---
 
-### 2. From Production VPC (`app-server-1`: 10.0.11.81) to Development VPC (`dev-server`: 10.1.1.128)
+## 2. Production to Development Verification
 
-#### Ping Test (ICMP)
+### Ping Validation (App Server 1 $\rightarrow$ Dev Server)
 ```bash
 $ ping -c 3 10.1.1.128
 PING 10.1.1.128 (10.1.1.128) 56(84) bytes of data.
@@ -46,18 +42,16 @@ PING 10.1.1.128 (10.1.1.128) 56(84) bytes of data.
 
 --- 10.1.1.128 ping statistics ---
 3 packets transmitted, 3 received, 0% packet loss, time 2099ms
-rtt min/avg/max/mdev = 0.121/0.145/0.169/0.019 ms
 ```
-**Status**: SUCCESS (0% packet loss).
+* **Status**: **PASS** (0% loss)
 
-#### HTTP Service Access (Port 80)
+### HTTP Validation (App Server 1 $\rightarrow$ Dev Server)
 ```bash
 $ curl -I http://10.1.1.128
 HTTP/1.1 200 OK
 Server: nginx/1.30.3
-Date: Mon, 13 Jul 2026 08:12:48 GMT
 Content-Type: text/html
 Content-Length: 28
 Connection: keep-alive
 ```
-**Status**: SUCCESS (HTTP 200 OK).
+* **Status**: **PASS** (HTTP 200 OK)
